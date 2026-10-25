@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 @testable import InkStats
 
@@ -168,7 +169,11 @@ final class RenderingTests: XCTestCase {
     /// the end), so it tore the items down again and again until the stack overflowed.
     /// setModules must commit its state before touching the status bar, and must treat a
     /// lone combined module (grouped empty) as no change.
-    func testSetModulesSurvivesTheNotificationStormFromTeardown() {
+    func testSetModulesSurvivesTheNotificationStormFromTeardown() throws {
+        // Real NSStatusItems need a WindowServer session and a booted NSApplication; a bare
+        // CLI test process aborts inside CGS otherwise (seen on CI), so skip without a GUI.
+        try XCTSkipUnless(CGSessionCopyCurrentDictionary() != nil, "no GUI session for status items")
+        _ = NSApplication.shared
         let modules: [ModuleID] = [.cpu, .gpu, .memory]
         let statusBar = StatusBarController()
         var renders = 0
