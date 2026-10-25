@@ -1,3 +1,4 @@
+import InkKit
 import AppKit
 
 /// The app icon: a brushed sparkline ending in the vermilion dot the panels use, with a seal,

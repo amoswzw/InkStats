@@ -1,3 +1,4 @@
+import InkKit
 import AppKit
 
 /// `InkStats --render-screenshots <folder>` writes the README slides. Readings are live, but

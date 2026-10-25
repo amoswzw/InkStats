@@ -1,3 +1,4 @@
+import InkKit
 import AppKit
 import XCTest
 @testable import InkStats

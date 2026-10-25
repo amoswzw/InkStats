@@ -1,3 +1,4 @@
+import InkKit
 import Foundation
 
 struct WeatherPlace: Codable, Hashable {

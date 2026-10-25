@@ -1,3 +1,4 @@
+import InkKit
 import Foundation
 
 enum ModuleID: String, CaseIterable {

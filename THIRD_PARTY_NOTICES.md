@@ -2,7 +2,7 @@
 
 ## rough.js
 
-`Sources/InkStats/Render/Rough.swift` is a partial Swift port of rough.js 4.6.6 (https://github.com/rough-stuff/rough).
+The drawing comes from [InkKit](https://github.com/amoswzw/InkKit), whose `Sources/InkKit/Render/Rough.swift` is a partial Swift port of rough.js 4.6.6 (https://github.com/rough-stuff/rough).
 
 ```
 MIT License

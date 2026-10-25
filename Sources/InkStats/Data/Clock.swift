@@ -1,3 +1,4 @@
+import InkKit
 import Foundation
 
 /// Sun and moon positions computed locally, accurate to about a minute, which is plenty for a menu bar.

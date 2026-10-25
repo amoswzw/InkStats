@@ -1,3 +1,4 @@
+import InkKit
 import CoreGraphics
 
 extension Painter {

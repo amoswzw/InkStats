@@ -4,6 +4,9 @@ import PackageDescription
 let package = Package(
     name: "InkStats",
     platforms: [.macOS(.v14)],
+    dependencies: [
+        .package(url: "https://github.com/amoswzw/InkKit.git", from: "0.1.0"),
+    ],
     targets: [
         .target(
             name: "CSystem",
@@ -16,7 +19,7 @@ let package = Package(
         .target(name: "HelperShared"),
         .executableTarget(
             name: "InkStats",
-            dependencies: ["CSystem", "HelperShared"]
+            dependencies: ["CSystem", "HelperShared", .product(name: "InkKit", package: "InkKit")]
         ),
         .executableTarget(
             name: "InkStatsHelper",

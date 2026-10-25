@@ -123,7 +123,7 @@ Sources/CSystem/        C wrappers for the SMC, HID sensors, IOReport and NVMe S
 Sources/HelperShared/   The XPC protocol and signing requirements shared by app and helper
 Sources/InkStatsHelper/ The privileged helper: powermetrics, fan control, processes
 Sources/InkStats/Data   Readers, snapshot types, sampling and history
-Sources/InkStats/Render Themes, the ink brush, the rough.js port, the shared painter
+Sources/InkStats/Render Weather glyphs and the app icon; themes, brush, rough.js port and painter come from InkKit
 Sources/InkStats/UI     Menu bar items, panels, per-module content
 Sources/InkStats/App    App delegate, settings, preview renderer
 ```

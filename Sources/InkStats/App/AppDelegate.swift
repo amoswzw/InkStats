@@ -1,3 +1,4 @@
+import InkKit
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {

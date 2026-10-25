@@ -1,3 +1,4 @@
+import InkKit
 import AppKit
 
 /// The dropdown sheet shown under a status item.

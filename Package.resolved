@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "inkkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/amoswzw/InkKit.git",
+      "state" : {
+        "revision" : "4bef927da1e8aef1c62b65297f1ff3bf609c3625",
+        "version" : "0.1.0"
+      }
+    }
+  ],
+  "version" : 2
+}

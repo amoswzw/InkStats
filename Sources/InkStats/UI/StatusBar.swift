@@ -1,3 +1,4 @@
+import InkKit
 import AppKit
 
 /// One status item per enabled module, except the combined ones, which share a single item
