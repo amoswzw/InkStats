@@ -1,0 +1,16 @@
+name: CI
+
+# Every push to main and every pull request is built and tested. Releasing is separate:
+# see release.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and test
+        run: swift test
