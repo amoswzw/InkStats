@@ -28,6 +28,15 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/Fonts/* "$APP/Contents/Resources/Fonts/"
 cp Resources/LaunchDaemons/dev.inkstats.helper.plist "$APP/Contents/Library/LaunchDaemons/"
 
+ICONSET=$(mktemp -d)/AppIcon.iconset
+mkdir -p "$ICONSET"
+.build/release/InkStats --render-icon "$ICONSET/icon_512x512@2x.png"
+for size in 16 32 128 256 512; do
+    sips -z $size $size "$ICONSET/icon_512x512@2x.png" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
+    sips -z $((size * 2)) $((size * 2)) "$ICONSET/icon_512x512@2x.png" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+
 # Inner code first, then the bundle that seals it.
 codesign --force --options runtime "$TIMESTAMP" --identifier dev.inkstats.helper --sign "$SIGN_IDENTITY" "$APP/Contents/MacOS/InkStatsHelper"
 codesign --force --options runtime "$TIMESTAMP" --entitlements Resources/InkStats.entitlements --sign "$SIGN_IDENTITY" "$APP"

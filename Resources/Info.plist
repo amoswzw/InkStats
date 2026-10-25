@@ -26,6 +26,8 @@
 	<string>public.app-category.utilities</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>InkStats shows today's and tomorrow's events in the Time panel. Events stay on your Mac.</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>InkStats contributors. MIT License.</string>
 </dict>

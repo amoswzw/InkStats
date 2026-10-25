@@ -1,6 +1,22 @@
 import AppKit
 
 let arguments = CommandLine.arguments
+if let flag = arguments.firstIndex(of: "--render-icon"), flag + 1 < arguments.count {
+    Fonts.registerBundled()
+    let size = 1024
+    let ctx = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: 0,
+                        space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    AppIcon.draw(ctx, size: CGFloat(size))
+    let destination = CGImageDestinationCreateWithURL(URL(fileURLWithPath: arguments[flag + 1]) as CFURL, "public.png" as CFString, 1, nil)!
+    CGImageDestinationAddImage(destination, ctx.makeImage()!, nil)
+    CGImageDestinationFinalize(destination)
+    exit(0)
+}
+if let flag = arguments.firstIndex(of: "--render-screenshots"), flag + 1 < arguments.count {
+    _ = NSApplication.shared
+    Screenshots.run(output: URL(fileURLWithPath: arguments[flag + 1]))
+    exit(0)
+}
 if let flag = arguments.firstIndex(of: "--render-preview"), flag + 1 < arguments.count {
     _ = NSApplication.shared
     PreviewRenderer.run(output: URL(fileURLWithPath: arguments[flag + 1]))

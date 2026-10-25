@@ -19,6 +19,15 @@ Alerts can notify you about high CPU use, memory pressure, high temperature, low
 
 The weather item is the only part of InkStats that uses the network, and it's off until you turn it on in Settings → Weather. It then sends the chosen place's coordinates to [Open-Meteo](https://open-meteo.com) about every 30 minutes, and searching for a place sends the search text. There is no telemetry, no update check and no account. Everything else is read locally from macOS.
 
+## Screenshots
+
+<p>
+<img src="docs/screenshots/1-menubar.png" width="900" alt="Menu bar with CPU and sensor panels">
+<img src="docs/screenshots/2-themes.png" width="900" alt="Ink-wash and hand-drawn themes, light and dark">
+<img src="docs/screenshots/3-weather-time.png" width="900" alt="Weather and time panels">
+<img src="docs/screenshots/4-sensors.png" width="900" alt="Sensors, power and battery panels">
+</p>
+
 ## Install
 
 ```sh
@@ -50,7 +59,7 @@ During development, `swift run` also works.
 
 `InkStats --helper status|install|uninstall` manages the privileged helper from the terminal. `InkStats --fan <index> <rpm>` holds one fan at a speed for ten seconds and then returns it to automatic, to test fan control. `InkStats --benchmark` times each reader.
 
-`InkStats --render-preview <folder>` samples live data for a few seconds and writes every menu bar item and panel, in both themes and appearances, as PNG files. It's handy for checking rendering changes and for screenshots.
+`InkStats --render-preview <folder>` samples live data for a few seconds and writes every menu bar item and panel, in both themes and appearances, as PNG files. It's handy for checking rendering changes. `--render-screenshots <folder>` draws the README screenshots, swapping process names, addresses and devices for samples, and `--render-icon <png>` draws the app icon.
 
 ## Settings
 
