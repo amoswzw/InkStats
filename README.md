@@ -22,10 +22,12 @@ The weather item is the only part of InkStats that uses the network, and it's of
 ## Screenshots
 
 <p>
-<img src="docs/screenshots/1-menubar.png" width="900" alt="Menu bar with CPU and sensor panels">
-<img src="docs/screenshots/2-themes.png" width="900" alt="Ink-wash and hand-drawn themes, light and dark">
-<img src="docs/screenshots/3-weather-time.png" width="900" alt="Weather and time panels">
-<img src="docs/screenshots/4-sensors.png" width="900" alt="Sensors, power and battery panels">
+<a href="docs/screenshots/1-menubar.png"><img src="docs/screenshots/1-menubar.png" width="49%" alt="Menu bar with CPU and sensor panels"></a>
+<a href="docs/screenshots/2-themes.png"><img src="docs/screenshots/2-themes.png" width="49%" alt="Ink-wash and hand-drawn themes, light and dark"></a>
+</p>
+<p>
+<a href="docs/screenshots/3-weather-time.png"><img src="docs/screenshots/3-weather-time.png" width="49%" alt="Weather and time panels"></a>
+<a href="docs/screenshots/4-sensors.png"><img src="docs/screenshots/4-sensors.png" width="49%" alt="Sensors, power and battery panels"></a>
 </p>
 
 ## Install
