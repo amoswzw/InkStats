@@ -5,7 +5,11 @@ let package = Package(
     name: "InkStats",
     platforms: [.macOS(.v14)],
     dependencies: [
-        .package(url: "https://github.com/amoswzw/InkKit.git", from: "0.1.0"),
+        // One argument per line: Dependabot reads the version requirement up to the line's end.
+        .package(
+            url: "https://github.com/amoswzw/InkKit.git",
+            from: "0.1.0"
+        ),
     ],
     targets: [
         .target(
