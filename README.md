@@ -70,7 +70,7 @@ Click **Settings** at the bottom of any panel, or right-click a menu bar item an
 | Tab | What it controls |
 |---|---|
 | General | Theme (水墨 Ink-wash or 手绘 Excalidraw), labels (theme default, English or 汉字), panel appearance, texture, update interval, launch at login |
-| Menu Bar | Which items to show, and whether to combine them into one item |
+| Menu Bar | Which items to show, and which of them to combine into one item; a combined item's panel has a row for switching between its parts |
 | Sensors | Every temperature sensor and fan, live, and which sensor the menu bar shows |
 | Alerts | Seven notification rules with adjustable thresholds, all off by default |
 | Weather | Turning weather on, choosing a place, and units |

@@ -1,26 +1,32 @@
 import AppKit
 
-/// One status item per enabled module, or a single combined item, drawn in the active theme.
+/// One status item per enabled module, except the combined ones, which share a single item
+/// placed where the first of them would be. Drawn in the active theme.
 final class StatusBarController {
     private static let combinedID = "combined"
     private static let combinedGap: CGFloat = 10
 
     private var items: [String: NSStatusItem] = [:]
     private var order: [ModuleID] = []
-    private var combined = false
+    private var combined: Set<ModuleID> = []
+
+    /// The modules in the combined item, left to right, or empty when nothing is combined.
+    var combinedModules: [ModuleID] { order.filter(combined.contains) }
     /// Horizontal extent of each module inside the combined item, for click routing.
     private var segments: [(ModuleID, ClosedRange<CGFloat>)] = []
+    private var ids: [String] = []
 
     var onClick: ((ModuleID, NSStatusBarButton) -> Void)?
     var onRightClick: ((NSStatusBarButton) -> Void)?
 
-    func setModules(_ modules: [ModuleID], combined: Bool) {
+    func setModules(_ modules: [ModuleID], combined: Set<ModuleID>) {
         guard modules != order || combined != self.combined else { return }
         items.values.forEach { NSStatusBar.system.removeStatusItem($0) }
         items.removeAll()
+        let (ids, grouped) = Self.itemIDs(modules, combined: combined)
+        self.ids = ids
         // New status items appear to the left of existing ones, so add in reverse.
-        let ids = combined ? (modules.isEmpty ? [] : [Self.combinedID]) : modules.reversed().map(\.rawValue)
-        for id in ids {
+        for id in ids.reversed() {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             item.autosaveName = "inkstats.\(id)"
             if let button = item.button {
@@ -33,7 +39,19 @@ final class StatusBarController {
             items[id] = item
         }
         order = modules
-        self.combined = combined
+        self.combined = grouped
+    }
+
+    /// Menu bar items left to right, and the modules that actually share the combined one.
+    static func itemIDs(_ modules: [ModuleID], combined: Set<ModuleID>) -> (ids: [String], grouped: Set<ModuleID>) {
+        // A single combined module is just a module.
+        let grouped = modules.filter(combined.contains).count > 1 ? combined.intersection(modules) : []
+        var ids: [String] = []
+        for module in modules {
+            if !grouped.contains(module) { ids.append(module.rawValue) }
+            else if !ids.contains(combinedID) { ids.append(combinedID) }
+        }
+        return (ids, grouped)
     }
 
     @objc private func clicked(_ sender: NSStatusBarButton) {
@@ -46,12 +64,40 @@ final class StatusBarController {
                 if let first = segments.first?.0 { onClick?(first, sender) }
                 return
             }
-            let x = sender.convert(event.locationInWindow, from: nil).x
+            let x = clickX(in: sender) ?? sender.convert(event.locationInWindow, from: nil).x
             let hit = segments.first { $0.1.contains(x) }?.0 ?? segments.min { abs($0.1.lowerBound - x) < abs($1.1.lowerBound - x) }?.0
             if let hit { onClick?(hit, sender) }
         } else if let module = ModuleID(rawValue: id) {
             onClick?(module, sender)
         }
+    }
+
+    /// Where along the combined image the pointer is. macOS 27 draws status items in its own
+    /// process and forwards clicks there, so this compares the pointer's screen position with
+    /// the item's screen frame from Accessibility. Nil when that frame isn't available.
+    private func clickX(in button: NSStatusBarButton) -> CGFloat? {
+        let pointer = NSEvent.mouseLocation.x
+        guard let frame = ownItemFrame(Self.combinedID), frame.minX > 0, pointer >= frame.minX, pointer <= frame.maxX else { return nil }
+        let imageWidth = button.image?.size.width ?? frame.width
+        return pointer - frame.minX - (frame.width - imageWidth) / 2
+    }
+
+    /// The on-screen frame of one of this app's own status items, from Accessibility.
+    private func ownItemFrame(_ id: String) -> CGRect? {
+        guard let index = ids.firstIndex(of: id) else { return nil }
+        var bar: AnyObject?, children: AnyObject?
+        let app = AXUIElementCreateApplication(getpid())
+        guard AXUIElementCopyAttributeValue(app, "AXExtrasMenuBar" as CFString, &bar) == .success,
+              AXUIElementCopyAttributeValue(bar as! AXUIElement, kAXChildrenAttribute as CFString, &children) == .success,
+              let items = children as? [AXUIElement], items.count == ids.count else { return nil }
+        let frames = items.map { item -> CGRect in
+            var position: AnyObject?, size: AnyObject?
+            var origin = CGPoint.zero, extent = CGSize.zero
+            if AXUIElementCopyAttributeValue(item, kAXPositionAttribute as CFString, &position) == .success { AXValueGetValue(position as! AXValue, .cgPoint, &origin) }
+            if AXUIElementCopyAttributeValue(item, kAXSizeAttribute as CFString, &size) == .success { AXValueGetValue(size as! AXValue, .cgSize, &extent) }
+            return CGRect(origin: origin, size: extent)
+        }.sorted { $0.minX < $1.minX }
+        return frames[index].width > 0 ? frames[index] : nil
     }
 
     func render(_ snapshot: Snapshot, _ history: History, settings: Settings, highlighted: ModuleID?) {
@@ -60,9 +106,9 @@ final class StatusBarController {
             let dark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
             let painter = Painter(theme: settings.theme, palette: Palette.make(settings.theme, dark: dark), texture: CGFloat(settings.texture))
             if id == Self.combinedID {
-                let images = order.map { ($0, Self.image($0, parts: barParts($0, snapshot, history), painter: painter, labels: settings.labelStyle)) }
+                let images = order.filter(combined.contains).map { ($0, Self.image($0, parts: barParts($0, snapshot, history), painter: painter, labels: settings.labelStyle)) }
                 button.image = combine(images)
-                button.highlight(highlighted != nil)
+                button.highlight(highlighted.map(combined.contains) ?? false)
             } else if let module = ModuleID(rawValue: id) {
                 button.image = Self.image(module, parts: barParts(module, snapshot, history), painter: painter, labels: settings.labelStyle)
                 button.highlight(module == highlighted)

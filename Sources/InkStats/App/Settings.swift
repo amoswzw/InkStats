@@ -83,9 +83,14 @@ final class Settings {
         set { store("historyDays", newValue) }
     }
 
-    var combineItems: Bool {
-        get { defaults.bool(forKey: "combineItems") }
-        set { store("combineItems", newValue) }
+    /// Modules drawn together as one menu bar item; the rest get an item each. Before this
+    /// was per module, a single switch combined everything, so that switch still counts.
+    var combinedModules: Set<ModuleID> {
+        get {
+            if let raw = defaults.stringArray(forKey: "combinedModules") { return Set(raw.compactMap(ModuleID.init(rawValue:))) }
+            return defaults.bool(forKey: "combineItems") ? Set(ModuleID.allCases) : []
+        }
+        set { store("combinedModules", ModuleID.allCases.filter(newValue.contains).map(\.rawValue)) }
     }
 
     /// "cpuAverage", "cpuHottest", "ssd", "battery", or a raw sensor name.

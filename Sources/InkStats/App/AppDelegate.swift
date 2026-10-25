@@ -32,6 +32,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.panel.hide()
             self?.settingsWindow.show()
         }
+        panel.onSwitch = { [weak self] module in
+            self?.panel.switchTo(module)
+            self?.render()
+        }
         panel.onRange = { [weak self] range in
             self?.panel.range = range
             self?.render()
@@ -89,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func render() {
-        statusBar.setModules(visibleModules(), combined: settings.combineItems)
+        statusBar.setModules(visibleModules(), combined: settings.combinedModules)
         statusBar.render(latest, history, settings: settings, highlighted: panel.module)
         sampler.setWantsProcesses(panel.module == .cpu || panel.module == .memory)
         sampler.setWantsTraffic(panel.module == .network)
@@ -105,6 +109,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let painter = Painter(theme: settings.theme, palette: Palette.make(settings.theme, dark: dark), texture: CGFloat(settings.texture))
         let source: SeriesSource = panel.range == .live ? history : StoredSeries(range: panel.range)
+        let group = statusBar.combinedModules
+        panel.siblings = group.contains(module) ? group : []
         panel.show(panelSpec(module, latest, source), painter: painter, labels: settings.labelStyle,
                    appearance: NSAppearance(named: dark ? .darkAqua : .aqua))
     }

@@ -106,34 +106,41 @@ private struct GeneralSettings: View {
 
 private struct MenuBarSettings: View {
     @State private var enabled = Set(Settings.shared.enabledModules)
-    @AppStorage("combineItems") private var combine = false
+    @State private var combined = Settings.shared.combinedModules
 
     var body: some View {
         Form {
             Section {
-                Toggle("Combine into one menu bar item", isOn: $combine)
-            } footer: {
-                Text("Saves menu bar space. Click a part of the combined item to open that panel.")
-                    .font(.inkCaption)
-                    .foregroundStyle(.secondary)
-            }
-            Section {
                 ForEach(ModuleID.allCases, id: \.self) { module in
-                    Toggle(isOn: Binding(
-                        get: { enabled.contains(module) },
-                        set: { on in
-                            if on { enabled.insert(module) } else { enabled.remove(module) }
-                            Settings.shared.enabledModules = ModuleID.allCases.filter(enabled.contains)
+                    HStack {
+                        Toggle(isOn: Binding(
+                            get: { enabled.contains(module) },
+                            set: { on in
+                                if on { enabled.insert(module) } else { enabled.remove(module) }
+                                Settings.shared.enabledModules = ModuleID.allCases.filter(enabled.contains)
+                            }
+                        )) {
+                            HStack {
+                                Text(module.names.english)
+                                Text(module.names.chinese).foregroundStyle(.secondary)
+                            }
                         }
-                    )) {
-                        HStack {
-                            Text(module.names.english)
-                            Text(module.names.chinese).foregroundStyle(.secondary)
-                        }
+                        Toggle("Combine", isOn: Binding(
+                            get: { combined.contains(module) },
+                            set: { on in
+                                if on { combined.insert(module) } else { combined.remove(module) }
+                                Settings.shared.combinedModules = combined
+                            }
+                        ))
+                        .toggleStyle(.checkbox)
+                        .disabled(!enabled.contains(module))
+                        .padding(.leading, 12)
                     }
                 }
+            } header: {
+                InkSectionHeader(chinese: "菜单栏项目", english: "Menu bar items")
             } footer: {
-                Text("Hold ⌘ and drag an item in the menu bar to reorder it. The battery item only appears on Macs with a battery.")
+                Text("Items marked Combine share one menu bar item, placed where the first of them sits; click a part of it to open that panel. The rest keep an item each. Hold ⌘ and drag an item in the menu bar to reorder it. The battery item only appears on Macs with a battery.")
                     .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }

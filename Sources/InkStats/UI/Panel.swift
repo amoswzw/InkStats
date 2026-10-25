@@ -23,6 +23,21 @@ final class PanelController {
         set { view.range = newValue }
     }
 
+    /// The modules sharing a combined menu bar item with the shown one, for switching between them.
+    var siblings: [ModuleID] {
+        get { view.siblings }
+        set { view.siblings = newValue }
+    }
+
+    var onSwitch: ((ModuleID) -> Void)? {
+        get { view.onSwitch }
+        set { view.onSwitch = newValue }
+    }
+
+    func switchTo(_ module: ModuleID) {
+        self.module = module
+    }
+
     init() {
         panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: PanelView.width, height: 400),
                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
@@ -85,7 +100,10 @@ final class PanelView: NSView {
     var onSettings: ((NSView, NSPoint) -> Void)?
     var onQuit: (() -> Void)?
     var onRange: ((GraphRange) -> Void)?
+    var siblings: [ModuleID] = []
+    var onSwitch: ((ModuleID) -> Void)?
 
+    private var siblingRects: [(ModuleID, CGRect)] = []
     private var rangeRects: [GraphRange: CGRect] = [:]
     private var actionRects: [(CGRect, () -> Void)] = []
     private var settingsRect = CGRect.zero
@@ -103,7 +121,8 @@ final class PanelView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
-        if settingsRect.contains(p) { onSettings?(self, CGPoint(x: settingsRect.minX, y: settingsRect.maxY + 4)) }
+        if let hit = siblingRects.first(where: { $0.1.contains(p) })?.0, hit != spec?.module { onSwitch?(hit) }
+        else if settingsRect.contains(p) { onSettings?(self, CGPoint(x: settingsRect.minX, y: settingsRect.maxY + 4)) }
         else if quitRect.contains(p) { onQuit?() }
         else if let hit = rangeRects.first(where: { $0.value.contains(p) })?.key, hit != range { onRange?(hit) }
         else if let action = actionRects.first(where: { $0.0.contains(p) })?.1 { action() }
@@ -119,6 +138,27 @@ final class PanelView: NSView {
 
         if let ctx { drawBackground(ctx, seed: seed) }
         var y = pad
+
+        // A combined menu bar item opens one panel; this row switches to the others it holds.
+        if siblings.count > 1 {
+            if ctx != nil { siblingRects = [] }
+            var x = pad
+            for module in siblings {
+                let selected = module == spec.module
+                let name = labels == .chinese ? module.names.character : module.names.tag
+                let text = NSAttributedString.styled(name, labels == .chinese ? p.fonts.chinese(15) : p.fonts.text(11), selected ? pal.ink : pal.sub)
+                let size = text.size()
+                if let ctx {
+                    text.draw(at: CGPoint(x: x, y: y))
+                    if selected {
+                        p.rule(ctx, from: CGPoint(x: x - 1, y: y + size.height + 2), to: CGPoint(x: x + size.width + 1, y: y + size.height + 2), seed: seed + 7)
+                    }
+                    siblingRects.append((module, CGRect(x: x - 6, y: y - 4, width: size.width + 12, height: size.height + 10)))
+                }
+                x += size.width + 18
+            }
+            y += 30
+        }
 
         // Header: name, big value, and (ink) the seal.
         let names = spec.module.names
@@ -144,7 +184,7 @@ final class PanelView: NSView {
         y += 6
 
         let sub = NSAttributedString.styled(spec.sub, p.fonts.text(12), pal.sub)
-        sub.draw(at: CGPoint(x: pad, y: y))
+        if ctx != nil { sub.draw(at: CGPoint(x: pad, y: y)) }
         y += 22
 
         if let graph = spec.graph {

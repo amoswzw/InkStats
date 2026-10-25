@@ -55,6 +55,7 @@ enum PreviewRenderer {
                 for module in modules {
                     let view = PanelView()
                     view.spec = panelSpec(module, snapshot, history)
+                    if module == .cpu { view.siblings = [.cpu, .gpu, .memory] }
                     view.painter = painter
                     view.labels = theme.defaultLabels
                     view.frame = NSRect(x: 0, y: 0, width: PanelView.width, height: view.requiredHeight())

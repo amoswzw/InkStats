@@ -150,4 +150,15 @@ final class RenderingTests: XCTestCase {
         let expected: [Int: WeatherCondition] = [0: .clear, 2: .partlyCloudy, 3: .cloudy, 48: .fog, 53: .drizzle, 82: .rain, 75: .snow, 99: .thunder]
         for (code, condition) in expected { XCTAssertEqual(WeatherCondition(code: code), condition, "code \(code)") }
     }
+
+    func testCombinedItemsTakeTheFirstOnesPlace() {
+        let modules: [ModuleID] = [.cpu, .gpu, .memory, .network, .disk]
+        let some = StatusBarController.itemIDs(modules, combined: [.gpu, .disk])
+        XCTAssertEqual(some.ids, ["cpu", "combined", "memory", "network"])
+        XCTAssertEqual(some.grouped, [.gpu, .disk])
+        XCTAssertEqual(StatusBarController.itemIDs(modules, combined: [.memory]).ids, ["cpu", "gpu", "memory", "network", "disk"],
+                       "one combined module stays a module")
+        XCTAssertEqual(StatusBarController.itemIDs(modules, combined: Set(ModuleID.allCases)).ids, ["combined"])
+        XCTAssertEqual(StatusBarController.itemIDs([.cpu], combined: [.cpu, .gpu]).grouped, [], "disabled modules don't count")
+    }
 }
