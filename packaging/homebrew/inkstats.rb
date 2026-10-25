@@ -11,7 +11,7 @@ cask "inkstats" do
   desc "System monitor for the menu bar, drawn in ink"
   homepage "https://github.com/amoswzw/InkStats"
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "InkStats.app"
 
