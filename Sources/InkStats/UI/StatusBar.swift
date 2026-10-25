@@ -19,12 +19,22 @@ final class StatusBarController {
     var onClick: ((ModuleID, NSStatusBarButton) -> Void)?
     var onRightClick: ((NSStatusBarButton) -> Void)?
 
-    func setModules(_ modules: [ModuleID], combined: Set<ModuleID>) {
-        guard modules != order || combined != self.combined else { return }
-        items.values.forEach { NSStatusBar.system.removeStatusItem($0) }
+    func setModules(_ modules: [ModuleID], combined requested: Set<ModuleID>) {
+        let (ids, grouped) = Self.itemIDs(modules, combined: requested)
+        // Guard on the grouped set actually stored: a lone combined module (grouped empty)
+        // must not rebuild the items on every render.
+        guard modules != order || grouped != self.combined else { return }
+        // Removing a status item that has an autosave name makes AppKit clear the saved
+        // position, which writes to UserDefaults and posts didChangeNotification
+        // synchronously. That re-enters render() and this method mid-teardown, so commit
+        // the new state and drain `items` before touching the status bar; the re-entrant
+        // call then stops at the guard above instead of recursing until the stack dies.
+        let removed = items
         items.removeAll()
-        let (ids, grouped) = Self.itemIDs(modules, combined: combined)
         self.ids = ids
+        order = modules
+        self.combined = grouped
+        removed.values.forEach { NSStatusBar.system.removeStatusItem($0) }
         // New status items appear to the left of existing ones, so add in reverse.
         for id in ids.reversed() {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -38,8 +48,6 @@ final class StatusBarController {
             }
             items[id] = item
         }
-        order = modules
-        self.combined = grouped
     }
 
     /// Menu bar items left to right, and the modules that actually share the combined one.

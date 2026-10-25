@@ -161,4 +161,38 @@ final class RenderingTests: XCTestCase {
         XCTAssertEqual(StatusBarController.itemIDs(modules, combined: Set(ModuleID.allCases)).ids, ["combined"])
         XCTAssertEqual(StatusBarController.itemIDs([.cpu], combined: [.cpu, .gpu]).grouped, [], "disabled modules don't count")
     }
+
+    /// Regression test for the combine-checkbox crash: removing a status item that has an
+    /// autosave name makes AppKit write to UserDefaults, which posts didChangeNotification
+    /// synchronously. That re-entered setModules mid-teardown (state was committed only at
+    /// the end), so it tore the items down again and again until the stack overflowed.
+    /// setModules must commit its state before touching the status bar, and must treat a
+    /// lone combined module (grouped empty) as no change.
+    func testSetModulesSurvivesTheNotificationStormFromTeardown() {
+        let modules: [ModuleID] = [.cpu, .gpu, .memory]
+        let statusBar = StatusBarController()
+        var renders = 0
+        // The same wiring AppDelegate uses: every defaults change re-renders.
+        let observer = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { _ in
+            renders += 1
+            statusBar.setModules(modules, combined: Settings.shared.combinedModules)
+        }
+        defer {
+            NotificationCenter.default.removeObserver(observer)
+            statusBar.setModules([], combined: [])
+            Settings.shared.combinedModules = []
+        }
+
+        statusBar.setModules(modules, combined: [])
+        Settings.shared.combinedModules = [.cpu, .gpu]  // what the Combine checkbox does
+        XCTAssertEqual(statusBar.combinedModules, [.cpu, .gpu])
+        Settings.shared.combinedModules = [.cpu]        // a lone combined module is none
+        XCTAssertEqual(statusBar.combinedModules, [])
+        Settings.shared.combinedModules = []
+        XCTAssertEqual(statusBar.combinedModules, [])
+
+        // Let queued observer calls drain; they must have converged, not crashed.
+        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        XCTAssertGreaterThan(renders, 0, "the teardown's defaults writes did notify")
+    }
 }
