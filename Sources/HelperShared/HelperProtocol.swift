@@ -11,7 +11,11 @@ public enum HelperIdentity {
     public static let version = "1"
 
     /// The team ID this process was signed with, or nil for unsigned and ad-hoc builds.
-    public static func signingTeam() -> String? {
+    public static func signingTeam() -> String? { ownTeam }
+
+    // A process's signature can't change while it runs, and the app asks on every sample;
+    // reading it each time is a Security call macOS flags on the main thread.
+    private static let ownTeam: String? = {
         var code: SecCode?
         guard SecCodeCopySelf([], &code) == errSecSuccess, let code else { return nil }
         var staticCode: SecStaticCode?
@@ -20,7 +24,7 @@ public enum HelperIdentity {
         guard SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
               let dict = info as? [String: Any] else { return nil }
         return dict[kSecCodeInfoTeamIdentifier as String] as? String
-    }
+    }()
 
     /// Accept only code that Apple's chain says was signed by `team` with `identifier`.
     public static func requirement(identifier: String, team: String) -> String {
