@@ -11,6 +11,6 @@ jobs:
   test:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build and test
         run: swift test
