@@ -127,7 +127,12 @@ jobs:
           ditto -c -k --keepParent build/InkStats.app "$ZIP"
           xcrun notarytool submit "$ZIP" --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
-          xcrun stapler staple build/InkStats.app
+          # Stapling fetches the ticket from Apple's CDN, which sometimes drops the connection.
+          for attempt in 1 2 3; do
+            xcrun stapler staple build/InkStats.app && break
+            [ "$attempt" = 3 ] && exit 1
+            sleep 15
+          done
           rm "$ZIP"
           ditto -c -k --keepParent build/InkStats.app "$ZIP"   # re-zip with the ticket
           spctl --assess --type execute --verbose build/InkStats.app
