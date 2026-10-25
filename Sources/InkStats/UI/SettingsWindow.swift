@@ -6,12 +6,7 @@ final class SettingsWindowController {
 
     func show() {
         if window == nil {
-            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
-            window.title = "InkStats Settings"
-            window.styleMask = [.titled, .closable]
-            window.isReleasedWhenClosed = false
-            window.center()
-            self.window = window
+            window = makeInkSettingsWindow(title: "InkStats Settings", size: CGSize(width: 820, height: 620), root: SettingsView())
         }
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
@@ -19,20 +14,38 @@ final class SettingsWindowController {
 }
 
 struct SettingsView: View {
+    static let pages = [
+        InkPage(id: "general", chinese: "通用", english: "General"),
+        InkPage(id: "menubar", chinese: "菜单栏", english: "Menu Bar"),
+        InkPage(id: "sensors", chinese: "温度", english: "Sensors"),
+        InkPage(id: "alerts", chinese: "提醒", english: "Alerts"),
+        InkPage(id: "weather", chinese: "天气", english: "Weather"),
+        InkPage(id: "clock", chinese: "时间", english: "Clock"),
+        InkPage(id: "helper", chinese: "助手", english: "Helper"),
+        InkPage(id: "history", chinese: "历史", english: "History"),
+        InkPage(id: "about", chinese: "关于", english: "About"),
+    ]
+    @State var page = "general"
+
     var body: some View {
-        TabView {
-            GeneralSettings().tabItem { Label("General", systemImage: "gearshape") }
-            MenuBarSettings().tabItem { Label("Menu Bar", systemImage: "menubar.rectangle") }
-            SensorsSettings().tabItem { Label("Sensors", systemImage: "thermometer.medium") }
-            AlertsSettings().tabItem { Label("Alerts", systemImage: "bell") }
-            WeatherSettings().tabItem { Label("Weather", systemImage: "cloud.sun") }
-            ClockSettings().tabItem { Label("Clock", systemImage: "clock") }
-            HelperSettings().tabItem { Label("Helper", systemImage: "lock.shield") }
-            HistorySettings().tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
-            AboutView().tabItem { Label("About", systemImage: "info.circle") }
+        InkSettingsShell(seal: "计", appChinese: "墨计", appEnglish: "InkStats", pages: Self.pages, selection: $page) { page in
+            Group {
+                switch page {
+                case "menubar": MenuBarSettings()
+                case "sensors": SensorsSettings()
+                case "alerts": AlertsSettings()
+                case "weather": WeatherSettings()
+                case "clock": ClockSettings()
+                case "helper": HelperSettings()
+                case "history": HistorySettings()
+                case "about": AboutView()
+                default: GeneralSettings()
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
-        .frame(width: 480)
-        .padding(.vertical, 12)
+        .frame(minWidth: 820, minHeight: 620)
     }
 }
 
@@ -72,7 +85,7 @@ private struct GeneralSettings: View {
             Toggle("Launch at login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
             if let loginError {
-                Text(loginError).font(.caption).foregroundStyle(.red)
+                Text(loginError).font(.inkCaption).foregroundStyle(.red)
             }
         }
         .formStyle(.grouped)
@@ -101,7 +114,7 @@ private struct MenuBarSettings: View {
                 Toggle("Combine into one menu bar item", isOn: $combine)
             } footer: {
                 Text("Saves menu bar space. Click a part of the combined item to open that panel.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
             Section {
@@ -121,7 +134,7 @@ private struct MenuBarSettings: View {
                 }
             } footer: {
                 Text("Hold ⌘ and drag an item in the menu bar to reorder it. The battery item only appears on Macs with a battery.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -157,14 +170,14 @@ struct ClockSettings: View {
                 }
             } footer: {
                 Text("Sunrise, sunset and the sun graph use the place chosen in the Weather tab. They're calculated on your Mac, and choosing a place doesn't turn weather on.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
-            Section("World clocks") {
+            Section {
                 ForEach(clocks, id: \.self) { identifier in
                     HStack {
                         Text(WorldClock.city(identifier))
-                        Text(identifier).font(.caption).foregroundStyle(.secondary)
+                        Text(identifier).font(.inkCaption).foregroundStyle(.secondary)
                         Spacer()
                         Button("Remove", systemImage: "minus.circle") { setClocks(clocks.filter { $0 != identifier }) }
                             .labelStyle(.iconOnly)
@@ -180,14 +193,14 @@ struct ClockSettings: View {
                     } label: {
                         HStack {
                             Text(WorldClock.city(identifier))
-                            Text(identifier).font(.caption).foregroundStyle(.secondary)
+                            Text(identifier).font(.inkCaption).foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
-            }
+            } header: { InkSectionHeader(chinese: "世界时钟", english: "World clocks") }
             Section {
                 Toggle("Show upcoming calendar events", isOn: $showEvents)
                     .onChange(of: showEvents) { _, on in
@@ -199,12 +212,12 @@ struct ClockSettings: View {
                     }
                 if eventsDenied {
                     Text("InkStats doesn't have access to your calendars. You can allow it in System Settings → Privacy & Security → Calendars.")
-                        .font(.caption)
+                        .font(.inkCaption)
                         .foregroundStyle(.red)
                 }
             } footer: {
                 Text("Today's and tomorrow's events are read from the Calendar app. They never leave your Mac.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -240,10 +253,10 @@ struct WeatherSettings: View {
                 }
             } footer: {
                 Text("Weather is the only part of InkStats that uses the network. While it's on, InkStats sends the chosen place's coordinates to Open-Meteo (open-meteo.com) about every 30 minutes. Searching sends the text you type. Nothing else leaves your Mac.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
-            Section("Place") {
+            Section {
                 LabeledContent("Showing", value: place.map { $0.detail.isEmpty ? $0.name : "\($0.name), \($0.detail)" } ?? "No place chosen")
                 HStack {
                     TextField("City", text: $query, prompt: Text("Search for a city"))
@@ -253,7 +266,7 @@ struct WeatherSettings: View {
                         .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || searching)
                 }
                 if let searchError {
-                    Text(searchError).font(.caption).foregroundStyle(.red)
+                    Text(searchError).font(.inkCaption).foregroundStyle(.red)
                 }
                 ForEach(results, id: \.self) { result in
                     Button {
@@ -264,14 +277,14 @@ struct WeatherSettings: View {
                     } label: {
                         VStack(alignment: .leading) {
                             Text(result.name)
-                            Text(result.detail).font(.caption).foregroundStyle(.secondary)
+                            Text(result.detail).font(.inkCaption).foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
-            }
+            } header: { InkSectionHeader(chinese: "地点", english: "Place") }
         }
         .formStyle(.grouped)
         .onAppear { enabled = Settings.shared.enabledModules.contains(.weather) }
@@ -309,7 +322,7 @@ private struct HistorySettings: View {
             LabeledContent("Stored on disk", value: Format.bytes(Double(size)))
             LabeledContent("Location") {
                 Text(HistoryStore.shared.url.deletingLastPathComponent().path)
-                    .font(.caption)
+                    .font(.inkCaption)
                     .textSelection(.enabled)
                     .foregroundStyle(.secondary)
             }
@@ -342,7 +355,7 @@ private struct AboutView: View {
                 .foregroundStyle(.secondary)
             Divider().padding(.vertical, 4)
             Text("MIT License. Includes a Swift port of rough.js (MIT, © 2019 Preet Shihn) and Excalifont (SIL Open Font License 1.1, © 2024 Excalidraw).")
-                .font(.caption)
+                .font(.inkCaption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -372,17 +385,17 @@ struct SensorsSettings: View {
                 Divider()
                 ForEach(sensors.all, id: \.key) { Text($0.name).tag($0.key) }
             }
-            Section("Temperatures") {
+            Section {
                 if sensors.all.isEmpty { Text("No temperature sensors found.").foregroundStyle(.secondary) }
                 ForEach(sensors.all, id: \.key) { sensor in
                     LabeledContent {
                         Text(String(format: "%.1f °C", sensor.celsius)).monospacedDigit()
                     } label: {
                         Text(sensor.name)
-                        Text(sensor.key).font(.caption).foregroundStyle(.secondary)
+                        Text(sensor.key).font(.inkCaption).foregroundStyle(.secondary)
                     }
                 }
-            }
+            } header: { InkSectionHeader(chinese: "温度", english: "Temperatures") }
             if !sensors.fans.isEmpty {
                 Section {
                     ForEach(sensors.fans, id: \.index) { FanRow(fan: $0, controllable: live.snapshot.helperRunning) }
@@ -392,7 +405,7 @@ struct SensorsSettings: View {
                     Text(live.snapshot.helperRunning
                          ? "Manual speeds last until InkStats quits, and fans return to automatic if any CPU sensor reaches 95 °C."
                          : "Install the helper in the Helper tab to set fan speeds.")
-                        .font(.caption)
+                        .font(.inkCaption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -409,7 +422,7 @@ struct AlertsSettings: View {
                 ForEach(AlertRule.allCases, id: \.self) { AlertRow(rule: $0) }
             } footer: {
                 Text("Each alert is sent once, then waits until the condition clears. The first time you turn one on, macOS asks to allow notifications from InkStats.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -475,7 +488,7 @@ private struct FanRow: View {
                         Text("\(Int(target)) rpm").monospacedDigit().frame(width: 80, alignment: .trailing)
                     }
                 }
-                if let error { Text(error).font(.caption).foregroundStyle(.red) }
+                if let error { Text(error).font(.inkCaption).foregroundStyle(.red) }
             }
         }
     }
@@ -497,24 +510,24 @@ private struct HelperSettings: View {
                 case .notInstalled:
                     Button("Install Helper…") { act { try HelperClient.shared.install() } }
                 case .needsApproval:
-                    Text("macOS needs your approval. Turn on InkStats under Allow in the Background.").font(.caption)
+                    Text("macOS needs your approval. Turn on InkStats under Allow in the Background.").font(.inkCaption)
                     Button("Open Login Items Settings") { HelperClient.shared.openApprovalSettings() }
                 case .running:
                     Button("Remove Helper", role: .destructive) { act { try HelperClient.shared.uninstall() } }
                 case .unavailable(let reason):
-                    Text(reason).font(.caption).foregroundStyle(.secondary)
+                    Text(reason).font(.inkCaption).foregroundStyle(.secondary)
                 }
-                if let message { Text(message).font(.caption).foregroundStyle(.red) }
+                if let message { Text(message).font(.inkCaption).foregroundStyle(.red) }
             }
-            Section("What the helper adds") {
+            Section {
                 Label("CPU and Neural Engine power, from Apple's powermetrics", systemImage: "bolt")
                 Label("CPU and memory of every process, including the system's", systemImage: "list.bullet")
                 Label("Manual fan speeds, with automatic fallback when hot", systemImage: "fan")
                 Label("Low Power Mode and Wi-Fi switches in the panels", systemImage: "switch.2")
-            }
+            } header: { InkSectionHeader(chinese: "助手能做什么", english: "What the helper adds") }
             Section {
                 Text("The helper runs as root, starts only when InkStats connects, and accepts requests only from InkStats builds signed by the same developer team. It can only perform the actions listed above.")
-                    .font(.caption)
+                    .font(.inkCaption)
                     .foregroundStyle(.secondary)
             }
         }

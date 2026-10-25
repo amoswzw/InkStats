@@ -8,7 +8,7 @@ enum PreviewRenderer {
         Fonts.registerBundled()
         try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
 
-        renderSettings(SettingsView(), to: output.appendingPathComponent("settings.png"))
+        renderSettingsWindow(to: output)
 
         renderGlyphs(to: output.appendingPathComponent("weather-glyphs.png"))
         // Only fetches when a place has been chosen in Settings → Weather.
@@ -99,6 +99,31 @@ enum PreviewRenderer {
         guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
         view.cacheDisplay(in: view.bounds, to: rep)
         try? rep.representation(using: .png, properties: [:])?.write(to: url)
+    }
+
+    /// Every page of the settings window, in both themes and appearances.
+    private static func renderSettingsWindow(to output: URL) {
+        let saved = UserDefaults.standard.string(forKey: "theme")
+        defer { UserDefaults.standard.set(saved, forKey: "theme") }
+        for theme in ThemeID.allCases {
+            UserDefaults.standard.set(theme.rawValue, forKey: "theme")
+            for dark in [false, true] {
+                for page in SettingsView.pages {
+                    let size = CGSize(width: 820, height: 620)
+                    let host = NSHostingView(rootView: SettingsView(page: page.id))
+                    host.frame = NSRect(origin: .zero, size: size)
+                    let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
+                    window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+                    window.contentView = host
+                    host.layoutSubtreeIfNeeded()
+                    RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+                    guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { continue }
+                    host.cacheDisplay(in: host.bounds, to: rep)
+                    let name = "settings-\(theme.rawValue)-\(dark ? "dark" : "light")-\(page.id).png"
+                    try? rep.representation(using: .png, properties: [:])?.write(to: output.appendingPathComponent(name))
+                }
+            }
+        }
     }
 
     static func renderSettings<V: View>(_ root: V, to url: URL) {
